@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MediatR" Version="12.4.1" />
+	</ItemGroup>
+	
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <Folder Include="Features\Customers\Dto\" />
+    <Folder Include="Features\Products\Dto\" />
+    <Folder Include="Features\Products\handlers\" />
+    <Folder Include="Features\Products\Commands\" />
+    <Folder Include="Features\Products\Validators\" />
+  </ItemGroup>
+
+</Project>
