@@ -1,6 +1,6 @@
 ﻿using Application.Common;
 using Application.Features.InvoiceLists.Queries;
-using Domain.Interfaces; // <-- اضافه شد
+using Domain.Interfaces;
 using Infrastructure.Persistance;
 using Infrastructure.Persistance.Repositories;
 using Infrastructure.Interceptors;
@@ -18,7 +18,7 @@ namespace IoC
             IConfiguration configuration)
         {
             // ==========================================
-            // 1. ثبت لایه Application (MediatR & Validators)
+            //Application (MediatR & Validators)
             // ==========================================
             var applicationAssembly = typeof(GetInvoicesListQuery).Assembly;
 
@@ -28,7 +28,7 @@ namespace IoC
             services.AddValidatorsFromAssembly(applicationAssembly);
 
             // ==========================================
-            // 2. ثبت Interceptor و دیتابیس
+            //  Interceptor and db
             // ==========================================
             var connectionString = configuration.GetConnectionString("CustomerDb")
                 ?? throw new InvalidOperationException("Connection string 'CustomerDb' not found in appsettings.json.");
@@ -44,11 +44,12 @@ namespace IoC
             });
 
             // ==========================================
-            // 3. ثبت Repositoryها و Unit of Work
+            // 3. Repository and unit of work
             // ==========================================
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IInvoiceReadRepository, InvoiceReadRepository>();
-            services.AddScoped<ICustomerRepository, CustomerRepository>(); 
+            services.AddScoped<ICustomerRepository, CustomerRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
 
             return services;
         }

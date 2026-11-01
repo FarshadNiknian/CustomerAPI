@@ -1,4 +1,5 @@
 ﻿using Domain.Common;
+using Domain.Events;
 using Domain.ValueObjects;
 
 
@@ -34,7 +35,14 @@ namespace Domain.Entities
             ArgumentNullException.ThrowIfNull(code);
             ArgumentNullException.ThrowIfNull(count);
 
-            return new Product(name, code, count);
+            var product = new Product(name, code, count);
+
+            product.AddDomainEvent(new ProductCreatedDomainEvent(
+                name.Value,
+                code.Value,
+                count.Value));
+
+            return product;
         }
         #endregion
 
@@ -46,6 +54,7 @@ namespace Domain.Entities
                 throw new DomainException("این محصول قبلاً حذف شده است.");
 
             IsDeleted = true;
+            AddDomainEvent(new ProductDeletedDomainEvent(this.Id));
         }
         #endregion
 

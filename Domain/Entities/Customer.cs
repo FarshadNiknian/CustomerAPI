@@ -1,17 +1,19 @@
 ﻿using Domain.Events;
 using Domain.ValueObjects;
+using System.ComponentModel;
 
 namespace Domain.Entities
 {
+    [DisplayName("مشتری")]
     public sealed class Customer : AggregateRoot
     {
 
         #region properties
         //نام و نام خانوادگی مشتری
-        public CustomerName CustomerName { get; set; }
+        public CustomerName CustomerName { get; private set; }
 
         //کد ملی
-        public NationalCode NationalCode { get; set; }
+        public NationalCode NationalCode { get; private set; }
         #endregion
 
         #region constructor
@@ -34,7 +36,7 @@ namespace Domain.Entities
                 customerName.FirstName,
                 customerName.LastName,
                 nationalCode.Value));
-
+            
             return customer;
         }
         #endregion
