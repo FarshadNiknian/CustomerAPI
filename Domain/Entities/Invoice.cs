@@ -26,6 +26,7 @@ namespace Domain.Entities
         public IReadOnlyCollection<InvoiceItem> Items => _items.AsReadOnly();
         #endregion
 
+        #region Constructor
         private Invoice() { }
 
         private Invoice(InvoiceNumber number, long customerId, DateTime issuedAtUtc)
@@ -40,12 +41,17 @@ namespace Domain.Entities
             IssuedAtUtc = issuedAtUtc;
             TotalAmount = Amount.Zero;
         }
+        #endregion
 
+        #region Create
         public static Invoice Create(InvoiceNumber number, long customerId, DateTime? issuedAtUtc = null)
         {
             return new Invoice(number, customerId, issuedAtUtc ?? DateTime.UtcNow);
         }
 
+        #endregion
+
+        #region AddItem
         public void AddItem(Product product, Amount unitPrice, InvoiceQuantity quantity)
         {
             ArgumentNullException.ThrowIfNull(product);
@@ -55,7 +61,7 @@ namespace Domain.Entities
             if (product.IsDeleted)
                 throw new DomainException($"محصول '{product.Name.Value}' حذف شده است و امکان ثبت آن در فاکتور وجود ندارد.");
 
-            // ابتدا بررسی موجودی قبل از تغییر وضعیت ردیف‌های فاکتور
+            
             if (product.Count.Value < quantity.Value)
                 throw new DomainException(
                     $"موجودی محصول '{product.Name.Value}' کافی نیست. موجودی فعلی: {product.Count.Value}، تعداد درخواستی: {quantity.Value}.");
@@ -63,11 +69,12 @@ namespace Domain.Entities
             //افزودن آیتم تکراری
             AddItem(product.Id, product.Name, unitPrice, quantity);
 
-          //کسر موجودی
+            //کسر موجودی
             product.DecreaseCount(quantity.Value);
         }
 
-        // افزودن آیتم با مقادیر صریح
+
+       
         public void AddItem(long productId, ProductName productName, Amount unitPrice, InvoiceQuantity quantity)
         {
             if (productId <= 0)
@@ -94,7 +101,9 @@ namespace Domain.Entities
 
             RecalculateTotalAmount();
         }
+        #endregion
 
+        #region remove
         public void RemoveItem(long productId)
         {
             var existingItem = _items.Find(x => x.ProductId == productId);
@@ -107,7 +116,9 @@ namespace Domain.Entities
             _items.Remove(existingItem);
             RecalculateTotalAmount();
         }
+        #endregion
 
+        #region Raise domain Event and total amount
         public void EnsureHasItems()
         {
             if (_items.Count == 0)
@@ -115,7 +126,7 @@ namespace Domain.Entities
         }
 
         /// <summary>
-        /// نهایی‌سازی فاکتور و ثبت رویداد دامنه برای ذخیره در جدول OutboxMessages
+        ///   OutboxMessages
         /// </summary>
         public void FinalizeCreation()
         {
@@ -149,5 +160,7 @@ namespace Domain.Entities
 
             TotalAmount = total;
         }
+        #endregion
+
     }
 }

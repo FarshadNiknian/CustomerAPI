@@ -9,13 +9,13 @@ namespace Infrastructure.Persistance
     {
         public ApplicationDbContext CreateDbContext(string[] args)
         {
-            // ۱. خواندن فایل تنظیمات
+            // read file
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            // ۲. دریافت کانکشن استرینگ از فایل
+            // get connectionString
             var connectionString = configuration.GetConnectionString("CustomerDb");
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();

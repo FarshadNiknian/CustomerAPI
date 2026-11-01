@@ -30,7 +30,7 @@ namespace Application.Features.Customers.Handlers
             var customerName = CustomerName.Create(request.FirstName, request.LastName);
             var nationalCode = NationalCode.Create(request.NationalCode);
 
-            // بررسی تکراری بودن و پرتاب ConflictException (جهت بازگرداندن 409 در کنترلر)
+            //  ConflictException (جهت بازگرداندن 409 در کنترلر)
             bool exists = await _customerRepository.ExistsByNationalCodeAsync(nationalCode, cancellationToken);
             if (exists)
             {

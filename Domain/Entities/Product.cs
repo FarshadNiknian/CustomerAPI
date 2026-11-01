@@ -83,13 +83,15 @@ namespace Domain.Entities
 
             Count = ProductCount.Create(Count.Value - amount);
         }
-        #endregion
 
-        
         private void EnsureNotDeleted()
         {
             if (IsDeleted)
                 throw new DomainException("امکان تغییر وضعیت محصول حذف‌شده وجود ندارد.");
         }
+        #endregion
+
+
+
     }
 }
