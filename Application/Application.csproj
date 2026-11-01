@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="MediatR" Version="12.4.1" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
 	</ItemGroup>
 	
   <ItemGroup>
@@ -15,7 +16,6 @@
   </ItemGroup>
 	
   <ItemGroup>
-    <Folder Include="Features\Customers\Dto\" />
     <Folder Include="Features\Products\Dto\" />
     <Folder Include="Features\Products\handlers\" />
     <Folder Include="Features\Products\Commands\" />

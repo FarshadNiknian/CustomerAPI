@@ -1,13 +1,13 @@
 ﻿using Application.Common;
-using Application.Features.InvoiceLists.Queries; 
+using Application.Features.InvoiceLists.Queries;
+using Domain.Interfaces; // <-- اضافه شد
 using Infrastructure.Persistance;
 using Infrastructure.Persistance.Repositories;
-using Infrastructure.Interceptors; 
+using Infrastructure.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
-
 
 namespace IoC
 {
@@ -48,6 +48,7 @@ namespace IoC
             // ==========================================
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IInvoiceReadRepository, InvoiceReadRepository>();
+            services.AddScoped<ICustomerRepository, CustomerRepository>(); 
 
             return services;
         }

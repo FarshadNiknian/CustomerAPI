@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Application.Features.Customers.Dto;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 namespace Application.Features.Customers.Commands
 {
     public sealed record CreateCustomerCommand(
-       string CustomerName,
-       string NationalCode);
+       string FirstName,
+       string LastName,
+       string NationalCode) : IRequest<CreateCustomerResponseDto>;
 }

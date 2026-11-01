@@ -1,4 +1,5 @@
-﻿using Domain.ValueObjects;
+﻿using Domain.Events;
+using Domain.ValueObjects;
 
 namespace Domain.Entities
 {
@@ -27,7 +28,14 @@ namespace Domain.Entities
         //create
         public static Customer Create(CustomerName customerName, NationalCode nationalCode)
         {
-            return new Customer(customerName, nationalCode);
+            var customer = new Customer(customerName, nationalCode);
+
+            customer.AddDomainEvent(new CustomerCreatedDomainEvent(
+                customerName.FirstName,
+                customerName.LastName,
+                nationalCode.Value));
+
+            return customer;
         }
         #endregion
 

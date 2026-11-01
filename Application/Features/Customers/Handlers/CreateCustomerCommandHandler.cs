@@ -1,17 +1,18 @@
 ﻿using Application.Common;
 using Application.Features.Customers.Commands;
+using Application.Features.Customers.Dto;
+using Application.Features.Customers.Mappings;
+using Domain.Common;
 using Domain.Entities;
+using Domain.Interfaces;
 using Domain.ValueObjects;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Application.Features.Customers.Handlers
 {
-    public sealed class CreateCustomerCommandHandler : IRequestHandler<CreateCustomerCommand, long>
+    public sealed class CreateCustomerCommandHandler
+      : IRequestHandler<CreateCustomerCommand, CreateCustomerResponseDto>
     {
         private readonly ICustomerRepository _customerRepository;
         private readonly IUnitOfWork _unitOfWork;
@@ -24,27 +25,36 @@ namespace Application.Features.Customers.Handlers
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<long> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
+        public async Task<CreateCustomerResponseDto> Handle(
+            CreateCustomerCommand request,
+            CancellationToken cancellationToken)
         {
-            // ۱. ایجاد Value Objectها
-            var customerName = new CustomerName(request.CustomerName.Trim());
-            var nationalCode = new NationalCode(request.NationalCode.Trim());
+            var customerName = CustomerName.Create(request.FirstName, request.LastName);
+            var nationalCode = NationalCode.Create(request.NationalCode);
 
-            // ۲. بررسی یکتا بودن کد ملی در بیزینس
-            var isDuplicate = await _customerRepository.ExistsByNationalCodeAsync(nationalCode, cancellationToken);
-            if (isDuplicate)
+            bool exists = await _customerRepository.ExistsByNationalCodeAsync(nationalCode, cancellationToken);
+            if (exists)
             {
-                throw new InvalidOperationException($"مشتری با کد ملی '{request.NationalCode}' قبلاً ثبت شده است.");
+                throw new DomainException("مشتری با این کد ملی قبلاً در سیستم ثبت شده است.");
             }
 
-            // ۳. ایجاد انتیتی مشتری از طریق Factory Method
             var customer = Customer.Create(customerName, nationalCode);
 
-            // ۴. درج در ریپازیتوری و ذخیره ترنزاکشن
-            await _customerRepository.AddAsync(customer, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-            return customer.Id;
+            try
+            {
+                await _customerRepository.AddAsync(customer, cancellationToken);
+
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+             
+                return customer.ToCreateResponseDto();
+            }
+            catch (Exception)
+            {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                throw;
+            }
         }
     }
 }
