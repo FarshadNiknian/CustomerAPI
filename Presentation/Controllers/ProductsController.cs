@@ -1,8 +1,7 @@
-﻿// Presentation/Controllers/ProductsController.cs
+﻿using Application.Common;
 using Application.Features.Products.Commands;
 using Application.Features.Products.Dto;
 using Application.Features.Products.Mappings;
-using Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -38,7 +37,7 @@ namespace Presentation.Controllers
 
                 return Created($"/api/products/{productId}", productId.ToCreateResponseDto());
             }
-            catch (DomainException ex)
+            catch (ConflictException ex)
             {
                 return Conflict(new ProblemDetails
                 {
@@ -50,10 +49,11 @@ namespace Presentation.Controllers
         }
 
         /// <summary>
-        ///soft delete
+        /// حذف منطقی (Soft Delete)
         /// </summary>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Delete(
             [FromRoute] long id,
@@ -66,7 +66,16 @@ namespace Presentation.Controllers
 
                 return NoContent();
             }
-            catch (DomainException ex)
+            catch (NotFoundException ex)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "عدم وجود محصول",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
+            catch (ConflictException ex)
             {
                 return Conflict(new ProblemDetails
                 {

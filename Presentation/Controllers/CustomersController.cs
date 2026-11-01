@@ -1,9 +1,8 @@
-﻿using Application.Features.Customers.Dto;
+﻿using Application.Common;
+using Application.Features.Customers.Dto;
 using Application.Features.Customers.Mappings;
-using Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
 
 namespace Presentation.Controllers
 {
@@ -37,7 +36,7 @@ namespace Presentation.Controllers
 
                 return Created($"/api/customers/{response.Id}", response);
             }
-            catch (DomainException ex)
+            catch (ConflictException ex)
             {
                 return Conflict(new ProblemDetails
                 {

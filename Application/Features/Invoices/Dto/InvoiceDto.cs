@@ -1,13 +1,17 @@
-﻿
-
-namespace Application.Features.InvoiceLists.Dto
+﻿namespace Application.Features.InvoiceLists.Dto
 {
+    #region Query & list Dto
+
+    public sealed record GetInvoicesListRequestDto(
+        int PageNumber = 1,
+        int PageSize = 10);
+
     public sealed record InvoiceLineDto(
-     long ProductId,
-     string ProductName,
-     decimal UnitPrice,
-     int Quantity,
-     decimal TotalPrice);
+        long ProductId,
+        string ProductName,
+        decimal UnitPrice,
+        int Quantity,
+        decimal TotalPrice);
 
     public sealed record InvoiceListItemDto(
         long Id,
@@ -23,4 +27,27 @@ namespace Application.Features.InvoiceLists.Dto
         int TotalCount,
         int PageNumber,
         int PageSize);
+
+    #endregion
+
+    #region Create Invoice DTOs
+
+    public sealed record CreateInvoiceItemRequestDto(
+        long ProductId,
+        decimal UnitPrice,
+        int Quantity);
+
+    public sealed record CreateInvoiceRequestDto(
+        string InvoiceNumber,
+        long CustomerId,
+        DateTime? IssuedAtUtc,
+        IReadOnlyList<CreateInvoiceItemRequestDto> Items);
+
+    public sealed record CreateInvoiceResponseDto(
+        long Id,
+        string InvoiceNumber,
+        decimal TotalAmount,
+        string Message);
+
+    #endregion
 }

@@ -27,7 +27,12 @@ namespace Domain.Entities
         #endregion
 
         #region Create
-        //create
+        /// <summary>
+        /// CreateCustomer
+        /// </summary>
+        /// <param name="customerName"></param>
+        /// <param name="nationalCode"></param>
+        /// <returns></returns>
         public static Customer Create(CustomerName customerName, NationalCode nationalCode)
         {
             var customer = new Customer(customerName, nationalCode);

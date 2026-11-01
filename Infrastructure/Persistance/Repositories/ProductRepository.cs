@@ -26,6 +26,15 @@ namespace Infrastructure.Persistance.Repositories
                 .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
         }
 
+        public async Task<Dictionary<long, Product>> GetByIdsAsync(
+      IReadOnlyCollection<long> ids,
+      CancellationToken cancellationToken = default)
+        {
+            return await _context.Products
+                .Where(p => ids.Contains(p.Id) && !p.IsDeleted)
+                .ToDictionaryAsync(p => p.Id, cancellationToken);
+        }
+
         public async Task<bool> IsCodeUniqueAsync(int code, CancellationToken cancellationToken)
         {
             return !await _context.Products

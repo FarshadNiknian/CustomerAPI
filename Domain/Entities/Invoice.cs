@@ -1,7 +1,7 @@
 ﻿using Domain.Common;
+using Domain.Events;
 using Domain.ValueObjects;
 using System.ComponentModel;
-
 
 namespace Domain.Entities
 {
@@ -9,25 +9,22 @@ namespace Domain.Entities
     public sealed class Invoice : AggregateRoot
     {
         #region properties
-        //
         private readonly List<InvoiceItem> _items = new();
 
-        //شماره فاکتور
+        // شماره فاکتور
         public InvoiceNumber Number { get; private set; } = null!;
 
-        //شناسه مشتری
+        // شناسه مشتری
         public long CustomerId { get; private set; }
 
-        //زمان خرید
+        // زمان خرید
         public DateTime IssuedAtUtc { get; private set; }
 
-        //مجموع خرید
+        // مجموع خرید
         public Amount TotalAmount { get; private set; } = null!;
 
-        //
         public IReadOnlyCollection<InvoiceItem> Items => _items.AsReadOnly();
         #endregion
-
 
         private Invoice() { }
 
@@ -43,22 +40,31 @@ namespace Domain.Entities
             IssuedAtUtc = issuedAtUtc;
             TotalAmount = Amount.Zero;
         }
-        
-        //create
+
         public static Invoice Create(InvoiceNumber number, long customerId, DateTime? issuedAtUtc = null)
         {
             return new Invoice(number, customerId, issuedAtUtc ?? DateTime.UtcNow);
         }
 
-        //addItem
         public void AddItem(Product product, Amount unitPrice, InvoiceQuantity quantity)
         {
             ArgumentNullException.ThrowIfNull(product);
+            ArgumentNullException.ThrowIfNull(unitPrice);
+            ArgumentNullException.ThrowIfNull(quantity);
 
             if (product.IsDeleted)
                 throw new DomainException($"محصول '{product.Name.Value}' حذف شده است و امکان ثبت آن در فاکتور وجود ندارد.");
 
+            // ابتدا بررسی موجودی قبل از تغییر وضعیت ردیف‌های فاکتور
+            if (product.Count.Value < quantity.Value)
+                throw new DomainException(
+                    $"موجودی محصول '{product.Name.Value}' کافی نیست. موجودی فعلی: {product.Count.Value}، تعداد درخواستی: {quantity.Value}.");
+
+            //افزودن آیتم تکراری
             AddItem(product.Id, product.Name, unitPrice, quantity);
+
+          //کسر موجودی
+            product.DecreaseCount(quantity.Value);
         }
 
         // افزودن آیتم با مقادیر صریح
@@ -102,14 +108,37 @@ namespace Domain.Entities
             RecalculateTotalAmount();
         }
 
-        //
         public void EnsureHasItems()
         {
             if (_items.Count == 0)
                 throw new DomainException("امکان ثبت فاکتور بدون ردیف کالا وجود ندارد.");
         }
 
-        //total amount
+        /// <summary>
+        /// نهایی‌سازی فاکتور و ثبت رویداد دامنه برای ذخیره در جدول OutboxMessages
+        /// </summary>
+        public void FinalizeCreation()
+        {
+            EnsureHasItems();
+
+            var eventItems = _items
+                .Select(x => new InvoiceCreatedItemDomainEvent(
+                    x.ProductId,
+                    x.ProductName.Value,
+                    x.UnitPrice.Value,
+                    x.Quantity.Value,
+                    x.TotalPrice.Value))
+                .ToList()
+                .AsReadOnly();
+
+            AddDomainEvent(new InvoiceCreatedDomainEvent(
+                Number.Value,
+                CustomerId,
+                IssuedAtUtc,
+                TotalAmount.Value,
+                eventItems));
+        }
+
         private void RecalculateTotalAmount()
         {
             var total = Amount.Zero;

@@ -12,5 +12,8 @@ namespace Domain.Interfaces
     {
         Task AddAsync(Customer customer, CancellationToken cancellationToken = default);
         Task<bool> ExistsByNationalCodeAsync(NationalCode nationalCode, CancellationToken cancellationToken = default);
+
+        Task<bool> ExistsAsync(long id, CancellationToken cancellationToken = default);
+
     }
 }

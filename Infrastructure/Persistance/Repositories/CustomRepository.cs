@@ -24,6 +24,12 @@ namespace Infrastructure.Persistance.Repositories
             await _context.Customers.AddAsync(customer, cancellationToken);
         }
 
+        public async Task<bool> ExistsAsync(long id, CancellationToken cancellationToken = default)
+        {
+            return await _context.Customers
+                .AnyAsync(c => c.Id == id, cancellationToken);
+        }
+
         public async Task<bool> ExistsByNationalCodeAsync(NationalCode nationalCode, CancellationToken cancellationToken = default)
         {
             return await _context.Customers

@@ -50,6 +50,8 @@ namespace IoC
             services.AddScoped<IInvoiceReadRepository, InvoiceReadRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+        
 
             return services;
         }

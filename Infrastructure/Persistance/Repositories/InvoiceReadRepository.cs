@@ -2,7 +2,6 @@
 using Application.Features.InvoiceLists.Queries;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace Infrastructure.Persistance.Repositories
 {
     public sealed class InvoiceReadRepository : IInvoiceReadRepository
@@ -19,38 +18,75 @@ namespace Infrastructure.Persistance.Repositories
             int pageSize,
             CancellationToken cancellationToken = default)
         {
-         
-            var baseQuery = from invoice in _context.Invoices.AsNoTracking()
-                            join customer in _context.Customers.AsNoTracking()
-                                on invoice.CustomerId equals customer.Id into customerGroup
-                            from customer in customerGroup.DefaultIfEmpty()
-                            orderby invoice.IssuedAtUtc descending
-                            select new InvoiceListItemDto(
-                                invoice.Id,
-                                invoice.Number.Value,
-                                invoice.CustomerId,
-                                customer != null ? $"{customer.CustomerName.FirstName} {customer.CustomerName.LastName}" : "مشتری نامشخص",
-                                invoice.IssuedAtUtc,
-                                invoice.TotalAmount.Value,
-                                invoice.Items.Select(item => new InvoiceLineDto(
-                                    item.ProductId,
-                                    item.ProductName.Value,
-                                    item.UnitPrice.Value,
-                                    item.Quantity.Value,
-                                    item.TotalPrice.Value
-                                )).ToList()
-                            );
+            int totalCount = await _context.Invoices
+                .AsNoTracking()
+                .CountAsync(cancellationToken);
 
-            //fetch record
-            var totalCount = await baseQuery.CountAsync(cancellationToken);
+            if (totalCount == 0)
+            {
+                return new PagedResult<InvoiceListItemDto>(
+                    Array.Empty<InvoiceListItemDto>(),
+                    0,
+                    pageNumber,
+                    pageSize);
+            }
 
-            // skip and take for pages
-            var items = await baseQuery
+            var invoices = await _context.Invoices
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Include(i => i.Items)
+                .OrderByDescending(i => i.IssuedAtUtc)
+                .ThenByDescending(i => i.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
-            return new PagedResult<InvoiceListItemDto>(items, totalCount, pageNumber, pageSize);
+            var customerIds = invoices
+                .Select(i => i.CustomerId)
+                .Distinct()
+                .ToList();
+
+            var customers = await _context.Customers
+                .AsNoTracking()
+                .Where(c => customerIds.Contains(c.Id))
+                .ToListAsync(cancellationToken);
+
+            var customerNamesById = customers.ToDictionary(
+                c => c.Id,
+                c => $"{c.CustomerName.FirstName} {c.CustomerName.LastName}".Trim());
+
+            var items = invoices
+                .Select(invoice =>
+                {
+                    var customerFullName = customerNamesById.TryGetValue(invoice.CustomerId, out var name)
+                        ? name
+                        : "نامشخص";
+
+                    var lines = invoice.Items
+                        .Select(line => new InvoiceLineDto(
+                            line.ProductId,
+                            line.ProductName.Value,
+                            line.UnitPrice.Value,
+                            line.Quantity.Value,
+                            line.TotalPrice.Value))
+                        .ToList();
+
+                    return new InvoiceListItemDto(
+                        invoice.Id,
+                        invoice.Number.Value,
+                        invoice.CustomerId,
+                        customerFullName,
+                        invoice.IssuedAtUtc,
+                        invoice.TotalAmount.Value,
+                        lines);
+                })
+                .ToList();
+
+            return new PagedResult<InvoiceListItemDto>(
+                items,
+                totalCount,
+                pageNumber,
+                pageSize);
         }
     }
 }
