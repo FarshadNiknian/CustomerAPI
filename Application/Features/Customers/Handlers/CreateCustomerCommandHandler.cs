@@ -2,12 +2,10 @@
 using Application.Features.Customers.Commands;
 using Application.Features.Customers.Dto;
 using Application.Features.Customers.Mappings;
-using Domain.Common;
 using Domain.Entities;
 using Domain.Interfaces;
 using Domain.ValueObjects;
 using MediatR;
-
 
 namespace Application.Features.Customers.Handlers
 {
@@ -32,10 +30,11 @@ namespace Application.Features.Customers.Handlers
             var customerName = CustomerName.Create(request.FirstName, request.LastName);
             var nationalCode = NationalCode.Create(request.NationalCode);
 
+            // بررسی تکراری بودن و پرتاب ConflictException (جهت بازگرداندن 409 در کنترلر)
             bool exists = await _customerRepository.ExistsByNationalCodeAsync(nationalCode, cancellationToken);
             if (exists)
             {
-                throw new DomainException("مشتری با این کد ملی قبلاً در سیستم ثبت شده است.");
+                throw new ConflictException("مشتری با این کد ملی قبلاً در سیستم ثبت شده است.");
             }
 
             var customer = Customer.Create(customerName, nationalCode);
@@ -45,9 +44,8 @@ namespace Application.Features.Customers.Handlers
             try
             {
                 await _customerRepository.AddAsync(customer, cancellationToken);
-
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
-             
+
                 return customer.ToCreateResponseDto();
             }
             catch (Exception)
